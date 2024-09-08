@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections;
 
-public class DragDropItemScript : MonoBehaviour {
+public class DragDropItemScript : MonoBehaviour 
+{
 
     // The plane the object is currently being dragged on, with respect to the camera
     private Plane dragPlane;
