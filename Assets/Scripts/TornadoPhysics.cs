@@ -10,41 +10,73 @@ public class TornadoPhysics : MonoBehaviour
 
     public float simulatedUpForce;
 
-    const float distanceToExternal = 15f; 
+    const float distanceToExternal = 15f;
+
+    public float gustChancePerTick;
+    public float gustMinV;
+    public float gustMaxV;
+    public float gustMinH;
+    public float gustMaxH;
+    public float gustNonCentreMultiplier;
 
     private Vector3 GetTornadoCentre() 
     {
         return this.transform.position;
     }
 
-    private Vector3 TornadoForce(Vector3 position)
+    private Vector3 TornadoForce(float xComponentSign, float yComponentToCentre, float distanceToCentre)
     {
-        float dist = Vector3.Distance(position, this.GetTornadoCentre());
         // why can I not import using "using System.Math"? who tf knows
-        float sideForceProportion = System.Math.Clamp(dist / distanceToExternal, 0, 1);
+        float sideForceProportion = System.Math.Clamp(distanceToCentre / distanceToExternal, 0, 1);
         float horizontalForce = ((sideForceProportion * externalSideForce + (1 - sideForceProportion) * internalSideForce) * forceMultiplier) * (UnityEngine.Random.value + 1);
         float verticalForce = simulatedUpForce * forceMultiplier * (UnityEngine.Random.value - 0.5f);
 
-        Vector3 towardsCentre = this.GetTornadoCentre() - position;       
+        return new Vector3(horizontalForce * xComponentSign, verticalForce + (System.Math.Clamp(yComponentToCentre, -2, 2)), 0);
+    }
 
-        return new Vector3(horizontalForce * System.Math.Clamp(towardsCentre.x, -1, 1), verticalForce + (System.Math.Clamp(towardsCentre.y, -2, 2)), 0);
+    private Vector3 GustForce(float xComponentSign)
+    {
+        if (UnityEngine.Random.value < gustChancePerTick)
+        {
+            Vector3 gustForce = new Vector3(
+                (Mathf.Lerp(gustMinH, gustMaxH, UnityEngine.Random.value) * (xComponentSign + gustNonCentreMultiplier * (UnityEngine.Random.value - 0.5f))),
+                (Mathf.Lerp(gustMinV, gustMaxV, UnityEngine.Random.value) * (xComponentSign + gustNonCentreMultiplier * (UnityEngine.Random.value - 0.5f))),
+                0.0f
+            );
+
+            return gustForce;
+        }
+        else 
+        {   
+            return new Vector3(0.0f, 0.0f, 0.0f);
+        }
     }
 
     private void TornadoWhoosh(Rigidbody body, Vector3 position)
     {
-        Vector3 force = TornadoForce(position);
-        body.AddForce(force);
-        Debug.Log("Whoosing with force: " + force.ToString());
+        Vector3 vecToCentre = this.GetTornadoCentre() - position;
+        float distanceToCentre = Vector3.Magnitude(vecToCentre);
+        float vecToCentreXComponentSign = vecToCentre.x / System.Math.Abs(vecToCentre.x);
+
+        Vector3 force = this.TornadoForce(vecToCentreXComponentSign, vecToCentre.y, distanceToCentre);
+        Vector3 gustForce = this.GustForce(vecToCentreXComponentSign);
+
+        body.AddForce(force, ForceMode.Acceleration);
+        body.AddForce(gustForce, ForceMode.Impulse);
+        // Debug.Log("Whoosing with force: " + force.ToString());
     }
 
     // Engine hook
-    public void OnCollisionStay(Collision collisionInfo)
+    public void OnTriggerStay(Collider collider)
     {
-        if(collisionInfo.gameObject.tag == "Whooshable")
+        if(collider.gameObject.tag == "Whooshable")
         {
-            this.TornadoWhoosh(collisionInfo.rigidbody, collisionInfo.gameObject.transform.position);
-            Debug.Log("Whooshable detected");
+            this.TornadoWhoosh(collider.attachedRigidbody, collider.gameObject.transform.position);
         }
-        Debug.Log("Collision Detected");
+    }
+
+    public void OnTriggerExit(Collider collider)
+    {
+        Destroy(collider.gameObject);
     }
 }
