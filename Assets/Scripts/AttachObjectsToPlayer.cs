@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class AttachObjectsToPlayer : MonoBehaviour
 {
-    public GameObject objectToAttach;
+    //public GameObject objectToAttach;
     private bool isAttached = false;
 
     // Start is called before the first frame update
@@ -17,14 +17,27 @@ public class AttachObjectsToPlayer : MonoBehaviour
     {
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
+    void OnCollisionEnter(Collision collision)
     {
         if (!isAttached && collision.gameObject.tag == "IsAttachable")
         {
             // Add a Fixed Joint to the object
-            FixedJoint2D joint = objectToAttach.AddComponent<FixedJoint2D>();
+            FixedJoint joint = collision.gameObject.AddComponent<FixedJoint>();
             // Connect the joint to the object you collided with
             joint.connectedBody = collision.rigidbody;
+
+            isAttached = true;
+        }
+    }
+    
+    void OnTriggerEnter(Collider collision)
+    {
+        if (!isAttached && collision.gameObject.tag == "IsAttachable")
+        {
+            // Add a Fixed Joint to the object
+            FixedJoint joint = collision.gameObject.AddComponent<FixedJoint>();
+            // Connect the joint to the object you collided with
+            joint.connectedBody = collision.GetComponent<Rigidbody>();
 
             isAttached = true;
         }
