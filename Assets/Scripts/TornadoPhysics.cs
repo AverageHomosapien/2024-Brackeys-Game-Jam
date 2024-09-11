@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// TODO: add length of tornado (maybe 60 seconds or something to start?)
+// when it ends, gravity needs to reengage and things need to fall off the screen again :D
+
 public class TornadoPhysics : MonoBehaviour
 {
     public float forceMultiplier;

@@ -19,7 +19,7 @@ public class ScoreTracker : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        score += Time.deltaTime;
+        score += Time.deltaTime * scoreMultiplier;
         scoreDisplay.text = originalText + System.Math.Floor(score).ToString();
     }
 }
