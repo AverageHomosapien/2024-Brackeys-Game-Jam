@@ -11,6 +11,9 @@ public class TornadoPhysics : MonoBehaviour
     public float internalSideForce;
     public float externalSideForce;
 
+    public ParticleSystem particles;
+    public ParticleSystem particles2;
+
     public float simulatedUpForce;
 
     const float distanceToExternal = 15f;
@@ -22,12 +25,19 @@ public class TornadoPhysics : MonoBehaviour
     public float gustMaxH;
     public float gustNonCentreMultiplier;
 
+    private float gustForceX;
+    private float gustForceY;
+    private float gustNonCentreX;
+    private float gustNonCentreY;
+
+    System.Func<float, float, float, Vector3> TornadoForce;
+
     private Vector3 GetTornadoCentre() 
     {
         return this.transform.position;
     }
 
-    private Vector3 TornadoForce(float xComponentSign, float yComponentToCentre, float distanceToCentre)
+    private Vector3 TornadoForce_Normal(float xComponentSign, float yComponentToCentre, float distanceToCentre)
     {
         // why can I not import using "using System.Math"? who tf knows
         float sideForceProportion = System.Math.Clamp(distanceToCentre / distanceToExternal, 0, 1);
@@ -37,22 +47,9 @@ public class TornadoPhysics : MonoBehaviour
         return new Vector3(horizontalForce * xComponentSign, verticalForce + (System.Math.Clamp(yComponentToCentre, -2, 2)), 0);
     }
 
-    private Vector3 GustForce(float xComponentSign)
+    private Vector3 TornadoForce_Stop(float a, float b, float c)
     {
-        if (UnityEngine.Random.value < gustChancePerTick)
-        {
-            Vector3 gustForce = new Vector3(
-                (Mathf.Lerp(gustMinH, gustMaxH, UnityEngine.Random.value) * (xComponentSign + gustNonCentreMultiplier * (UnityEngine.Random.value - 0.5f))),
-                (Mathf.Lerp(gustMinV, gustMaxV, UnityEngine.Random.value) * (xComponentSign + gustNonCentreMultiplier * (UnityEngine.Random.value - 0.5f))),
-                0.0f
-            );
-
-            return gustForce;
-        }
-        else 
-        {   
-            return new Vector3(0.0f, 0.0f, 0.0f);
-        }
+        return new Vector3(0.0f, -9.8f, 0.0f);
     }
 
     private void TornadoWhoosh(Rigidbody body, Vector3 position)
@@ -62,14 +59,41 @@ public class TornadoPhysics : MonoBehaviour
         float vecToCentreXComponentSign = vecToCentre.x / System.Math.Abs(vecToCentre.x);
 
         Vector3 force = this.TornadoForce(vecToCentreXComponentSign, vecToCentre.y, distanceToCentre);
-        Vector3 gustForce = this.GustForce(vecToCentreXComponentSign);
+        Vector3 gustForce = new Vector3(
+            this.gustForceX * (vecToCentreXComponentSign + this.gustNonCentreX),
+            this.gustForceY * (vecToCentreXComponentSign + this.gustNonCentreY),
+            0.0f
+        );
 
         body.AddForce(force, ForceMode.Acceleration);
         body.AddForce(gustForce, ForceMode.Impulse);
         // Debug.Log("Whoosing with force: " + force.ToString());
     }
 
-    // Engine hook
+    public void OnStopScoring()
+    {
+        this.TornadoForce = this.TornadoForce_Stop;
+        this.gustChancePerTick = 0.0f;
+        this.particles.Stop();
+        this.particles2.Stop();
+    }
+
+    public void DoGust()
+    {
+        // Gust physics updates
+        this.gustForceX = Mathf.Lerp(gustMinH, gustMaxH, UnityEngine.Random.value);
+        this.gustForceY = Mathf.Lerp(gustMinV, gustMaxV, UnityEngine.Random.value);
+        gustNonCentreX = gustNonCentreMultiplier * (UnityEngine.Random.value - 0.5f);
+        gustNonCentreY = gustNonCentreMultiplier * (UnityEngine.Random.value - 0.5f);
+
+        // Animation
+
+    }
+
+    // ======================================
+    // ENGINE HOOKS
+    // ======================================
+
     public void OnTriggerStay(Collider collider)
     {
         if(collider.gameObject.tag == "Whooshable")
@@ -81,5 +105,24 @@ public class TornadoPhysics : MonoBehaviour
     public void OnTriggerExit(Collider collider)
     {
         Destroy(collider.gameObject);
+    }
+
+    public void Start()
+    {
+        this.TornadoForce = this.TornadoForce_Normal;
+    }
+
+    // Update gusts
+    public void Update() 
+    {
+        if (UnityEngine.Random.value < gustChancePerTick)
+        {
+            this.DoGust();
+        }
+        else 
+        {   
+            this.gustForceX = 0.0f;
+            this.gustForceY = 0.0f;
+        }
     }
 }
