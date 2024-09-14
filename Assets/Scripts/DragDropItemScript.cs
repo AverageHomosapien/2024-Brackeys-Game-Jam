@@ -1,8 +1,7 @@
 using UnityEngine;
-using System.Collections;
 using System;
 using System.Linq;
-using Unity.VisualScripting;
+using System.Collections.Generic;
 
 public class DragDropItemScript : MonoBehaviour 
 {
@@ -14,27 +13,33 @@ public class DragDropItemScript : MonoBehaviour
     private Camera myMainCamera; 
     private float LastSetZ;
     private bool isDragging = false;
+    private List<GameObject> objectsJoinedToCurrentObject = new();
 
     void Start()
     {
-        myMainCamera = Camera.main; // Camera.main is expensive - cache it here
+        gameObject.GetComponent<Rigidbody>().isKinematic = false;
+        myMainCamera = Camera.main;
         LastSetZ = 0;
     }
 
     private void Update()
     {
-        // Fixing issue where multiple joined items are rotating
-        //transform.SetPositionAndRotation(transform.position, new Quaternion(transform.rotation.x, transform.rotation.y, LastSetZ, transform.rotation.w));
+        var rigidBody = GetComponent<Rigidbody>();
+        rigidBody.velocity = Vector3.zero;
 
         if (isDragging && Input.GetKey(KeyCode.E))
         {
-            LastSetZ = Math.Min(1, LastSetZ + 0.003f);
+            LastSetZ = Math.Min(1, LastSetZ + 0.001f);
             transform.rotation = new Quaternion(transform.rotation.x, transform.rotation.w, LastSetZ, transform.rotation.w);
         }
         else if (isDragging && Input.GetKey(KeyCode.Q))
         {
-            LastSetZ = Math.Max(-1, LastSetZ - 0.003f);
+            LastSetZ = Math.Max(-1, LastSetZ - 0.001f);
             transform.rotation = new Quaternion(transform.rotation.x, transform.rotation.w, LastSetZ, transform.rotation.w); 
+        }
+        else
+        {
+            rigidBody.rotation = Quaternion.identity;
         }
     }
 
@@ -47,13 +52,6 @@ public class DragDropItemScript : MonoBehaviour
         dragPlane.Raycast(camRay, out float planeDist);
         offset = transform.position - camRay.GetPoint(planeDist);
 
-        // Remove object parents
-        var parents = gameObject.GetComponentsInParent<Transform>();
-        for (int i = 0; i < parents.Length; i++)
-        {
-            gameObject.transform.SetParent(parents[i], false);
-        }
-
         // Destroy joint if it exists
         if (gameObject.TryGetComponent(out FixedJoint specificJoint))
         {
@@ -64,10 +62,24 @@ public class DragDropItemScript : MonoBehaviour
 
     void OnMouseDrag()
     {   
+        var rigidBody = GetComponent<Rigidbody>();
         Ray camRay = myMainCamera.ScreenPointToRay(Input.mousePosition);
 
         dragPlane.Raycast(camRay, out float planeDist);
         transform.position = camRay.GetPoint(planeDist) + offset;
+
+        rigidBody.velocity = Vector3.zero;
+        if (!Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.E))
+        { 
+            rigidBody.rotation = Quaternion.identity;
+        }
+        var joints = gameObject.GetComponents<FixedJoint>();
+
+        Collider[] colliders = Physics.OverlapSphere(gameObject.transform.position, 5f);
+        foreach (var collider in colliders.Where(c => c.gameObject.GetComponents<FixedJoint>().Any(fj => fj.connectedBody == gameObject.transform)))
+        {
+            collider.transform.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        }
     }
 
     void OnMouseUp()
@@ -75,19 +87,25 @@ public class DragDropItemScript : MonoBehaviour
         // Check if the object being dragged is touching any other objects
         Collider[] colliders = Physics.OverlapSphere(gameObject.transform.position, 1f);
 
-        var colliderChildren = gameObject.GetComponentsInChildren<Transform>();
-        foreach (Collider collider in colliders.Where(c => c.gameObject != gameObject && !colliderChildren.Contains(c.transform)))
+        // Create only a single child
+        Collider collider = colliders.FirstOrDefault(c => c.gameObject != gameObject
+                                                       && (!c.gameObject.GetComponents<FixedJoint>().Any()
+                                                       || !c.gameObject.GetComponents<FixedJoint>().Any(fj => fj.transform == gameObject.transform)));
+
+        if (collider != null)
         {
             // If touching another object, create a joint between them
-            //FixedJoint joint = gameObject.AddComponent<FixedJoint>();
-            //joint.connectedBody = collider.attachedRigidbody;
-            //joint.breakForce = 500f;
-            //joint.breakTorque = 500f;
-
-            gameObject.transform.SetParent(collider.transform, false);
-
-            break; // We only need one joint, break out of the loop
+            FixedJoint joint = gameObject.AddComponent<FixedJoint>();
+            joint.connectedBody = collider.attachedRigidbody;
+            joint.breakForce = float.PositiveInfinity;
+            joint.breakTorque = float.PositiveInfinity;
         }
+
         isDragging = false;
+    }
+
+    public void AttachObjectToCurrent(GameObject gameObject)
+    {
+        objectsJoinedToCurrentObject.Add(gameObject);
     }
 }

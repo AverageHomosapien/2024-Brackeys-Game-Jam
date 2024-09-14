@@ -41,8 +41,8 @@ public class TornadoPhysics : MonoBehaviour
     {
         // why can I not import using "using System.Math"? who tf knows
         float sideForceProportion = System.Math.Clamp(distanceToCentre / distanceToExternal, 0, 1);
-        float horizontalForce = ((sideForceProportion * externalSideForce + (1 - sideForceProportion) * internalSideForce) * forceMultiplier) * (UnityEngine.Random.value + 1);
-        float verticalForce = simulatedUpForce * forceMultiplier * (UnityEngine.Random.value - 0.5f);
+        float horizontalForce = ((sideForceProportion * externalSideForce + (1 - sideForceProportion) * internalSideForce) * forceMultiplier) * (Random.value + 1);
+        float verticalForce = simulatedUpForce * forceMultiplier * (Random.value - 0.5f);
 
         return new Vector3(horizontalForce * xComponentSign, verticalForce + (System.Math.Clamp(yComponentToCentre, -2, 2)), 0);
     }
@@ -81,10 +81,10 @@ public class TornadoPhysics : MonoBehaviour
     public void DoGust()
     {
         // Gust physics updates
-        this.gustForceX = Mathf.Lerp(gustMinH, gustMaxH, UnityEngine.Random.value);
-        this.gustForceY = Mathf.Lerp(gustMinV, gustMaxV, UnityEngine.Random.value);
-        gustNonCentreX = gustNonCentreMultiplier * (UnityEngine.Random.value - 0.5f);
-        gustNonCentreY = gustNonCentreMultiplier * (UnityEngine.Random.value - 0.5f);
+        this.gustForceX = Mathf.Lerp(gustMinH, gustMaxH, Random.value);
+        this.gustForceY = Mathf.Lerp(gustMinV, gustMaxV, Random.value);
+        gustNonCentreX = gustNonCentreMultiplier * (Random.value - 0.5f);
+        gustNonCentreY = gustNonCentreMultiplier * (Random.value - 0.5f);
 
         // Animation
 
@@ -115,7 +115,7 @@ public class TornadoPhysics : MonoBehaviour
     // Update gusts
     public void Update() 
     {
-        if (UnityEngine.Random.value < gustChancePerTick)
+        if (Random.value < gustChancePerTick)
         {
             this.DoGust();
         }
