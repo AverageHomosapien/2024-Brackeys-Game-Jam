@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using static System.Math;
 using UnityEngine;
 
 // TODO: add length of tornado (maybe 60 seconds or something to start?)
@@ -39,12 +40,11 @@ public class TornadoPhysics : MonoBehaviour
 
     private Vector3 TornadoForce_Normal(float xComponentSign, float yComponentToCentre, float distanceToCentre)
     {
-        // why can I not import using "using System.Math"? who tf knows
-        float sideForceProportion = System.Math.Clamp(distanceToCentre / distanceToExternal, 0, 1);
+        float sideForceProportion = Clamp(distanceToCentre / distanceToExternal, 0, 1);
         float horizontalForce = ((sideForceProportion * externalSideForce + (1 - sideForceProportion) * internalSideForce) * forceMultiplier) * (Random.value + 1);
         float verticalForce = simulatedUpForce * forceMultiplier * (Random.value - 0.5f);
 
-        return new Vector3(horizontalForce * xComponentSign, verticalForce + (System.Math.Clamp(yComponentToCentre, -2, 2)), 0);
+        return new Vector3(horizontalForce * xComponentSign, verticalForce + (Clamp(yComponentToCentre, -2, 2)), 0);
     }
 
     private Vector3 TornadoForce_Stop(float a, float b, float c)
@@ -56,7 +56,7 @@ public class TornadoPhysics : MonoBehaviour
     {
         Vector3 vecToCentre = this.GetTornadoCentre() - position;
         float distanceToCentre = Vector3.Magnitude(vecToCentre);
-        float vecToCentreXComponentSign = vecToCentre.x / System.Math.Abs(vecToCentre.x);
+        float vecToCentreXComponentSign = vecToCentre.x / Abs(vecToCentre.x);
 
         Vector3 force = this.TornadoForce(vecToCentreXComponentSign, vecToCentre.y, distanceToCentre);
         Vector3 gustForce = new Vector3(
