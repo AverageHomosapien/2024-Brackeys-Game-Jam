@@ -11,15 +11,15 @@ public class DragDropItemScript : MonoBehaviour
     // where the origin of the object is on the drag plane
     private Vector3 offset;
     private Camera myMainCamera; 
-    private float LastSetZ;
     private bool isDragging = false;
     private List<GameObject> objectsJoinedToCurrentObject = new();
+    private Vector3 leftRotate = new Vector3(0, 0, 0.5f);
+    private Vector3 rightRotate = new Vector3(0, 0, -0.5f);
 
     void Start()
     {
         gameObject.GetComponent<Rigidbody>().isKinematic = false;
         myMainCamera = Camera.main;
-        LastSetZ = 0;
     }
 
     private void Update()
@@ -29,17 +29,16 @@ public class DragDropItemScript : MonoBehaviour
 
         if (isDragging && Input.GetKey(KeyCode.E))
         {
-            LastSetZ = Math.Min(1, LastSetZ + 0.001f);
-            transform.rotation = new Quaternion(transform.rotation.x, transform.rotation.w, LastSetZ, transform.rotation.w);
+            transform.Rotate(rightRotate);
         }
         else if (isDragging && Input.GetKey(KeyCode.Q))
         {
-            LastSetZ = Math.Max(-1, LastSetZ - 0.001f);
-            transform.rotation = new Quaternion(transform.rotation.x, transform.rotation.w, LastSetZ, transform.rotation.w); 
+            transform.Rotate(leftRotate);
         }
-        else
+
+        if (!isDragging)
         {
-            rigidBody.rotation = Quaternion.identity;
+            transform.Rotate(Vector3.zero);// = new Quaternion(x: startingRotation.x, y: startingRotation.y, z: transform.rotation.z, w: startingRotation.w);
         }
     }
 
@@ -52,56 +51,64 @@ public class DragDropItemScript : MonoBehaviour
         dragPlane.Raycast(camRay, out float planeDist);
         offset = transform.position - camRay.GetPoint(planeDist);
 
-        // Destroy joint if it exists
+        // Destroy joint if it exists (will only ever have 1 joint to another object)
         if (gameObject.TryGetComponent(out FixedJoint specificJoint))
         {
             // Destroy the specific joint
             Destroy(specificJoint);
+            Destroy(gameObject);
+            //DontDestroyOnLoad(specificJoint);
         }
     }
 
     void OnMouseDrag()
     {   
-        var rigidBody = GetComponent<Rigidbody>();
         Ray camRay = myMainCamera.ScreenPointToRay(Input.mousePosition);
 
         dragPlane.Raycast(camRay, out float planeDist);
         transform.position = camRay.GetPoint(planeDist) + offset;
 
-        rigidBody.velocity = Vector3.zero;
-        if (!Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.E))
-        { 
-            rigidBody.rotation = Quaternion.identity;
-        }
-        var joints = gameObject.GetComponents<FixedJoint>();
-
-        Collider[] colliders = Physics.OverlapSphere(gameObject.transform.position, 5f);
-        foreach (var collider in colliders.Where(c => c.gameObject.GetComponents<FixedJoint>().Any(fj => fj.connectedBody == gameObject.transform)))
-        {
-            collider.transform.GetComponent<Rigidbody>().velocity = Vector3.zero;
-        }
+        //Collider[] colliders = Physics.OverlapSphere(gameObject.transform.position, 5f);
+        //foreach (var collider in colliders.Where(c => c.gameObject.GetComponents<FixedJoint>().Any(fj => fj.connectedBody == gameObject.transform)))
+        //{
+        //    collider.transform.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        //}
     }
 
     void OnMouseUp()
     {
+        isDragging = false;
+
         // Check if the object being dragged is touching any other objects
         Collider[] colliders = Physics.OverlapSphere(gameObject.transform.position, 1f);
 
-        // Create only a single child
+        // If in range, first try to add the joint to the player object
+        Collider playerCollider = colliders.FirstOrDefault(c => c.gameObject.tag == "Player");
+        if (playerCollider != null)
+        {
+            AddJointToCollider(playerCollider);
+            return;
+        }
+
+        // Fallback and try and create a joint on another collider that's not the original object and that doesn't already have a joint to this object (don't want joint to joint)
         Collider collider = colliders.FirstOrDefault(c => c.gameObject != gameObject
                                                        && (!c.gameObject.GetComponents<FixedJoint>().Any()
                                                        || !c.gameObject.GetComponents<FixedJoint>().Any(fj => fj.transform == gameObject.transform)));
-
         if (collider != null)
         {
-            // If touching another object, create a joint between them
-            FixedJoint joint = gameObject.AddComponent<FixedJoint>();
-            joint.connectedBody = collider.attachedRigidbody;
-            joint.breakForce = float.PositiveInfinity;
-            joint.breakTorque = float.PositiveInfinity;
+            AddJointToCollider(collider);
         }
+    }
 
-        isDragging = false;
+    private void AddJointToCollider(Collider otherObjectToAttachTo)
+    {
+        // If touching another object, create a joint between them
+        FixedJoint joint = gameObject.AddComponent<FixedJoint>();
+        joint.connectedBody = otherObjectToAttachTo.attachedRigidbody;
+        joint.breakForce = float.PositiveInfinity;
+        joint.breakTorque = float.PositiveInfinity;
+
+        DontDestroyOnLoad(gameObject);
     }
 
     public void AttachObjectToCurrent(GameObject gameObject)
