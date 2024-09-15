@@ -5646,7 +5646,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 30, y: 40, z: 5}
+  m_Size: {x: 30, y: 40, z: 30}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!33 &1053431278
 MeshFilter:
@@ -5665,21 +5665,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 1053431275}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 21f5f1479e88c9f49b277cf0508c0877, type: 3}
+  m_Script: {fileID: 11500000, guid: 16472b15118df8f4abab92cbde28788f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 5
-  internalSideForce: 10
-  externalSideForce: 3
-  particles: {fileID: 1362874626}
-  particles2: {fileID: 906305379}
-  simulatedUpForce: 5
-  gustChancePerTick: 4
+  forceMultiplier: 3
+  internalSideForce: 5
+  externalSideForce: 10
+  particles: {fileID: 906305379}
+  particles2: {fileID: 1362874626}
+  simulatedUpForce: 3
+  gustChancePerTick: 0.05
   gustMinV: 0
-  gustMaxV: 0
-  gustMinH: 0
-  gustMaxH: 0
-  gustNonCentreMultiplier: 0
+  gustMaxV: 0.1
+  gustMinH: 1
+  gustMaxH: 3
+  gustNonCentreMultiplier: 0.2
 --- !u!1 &1076435228
 GameObject:
   m_ObjectHideFlags: 0
@@ -11696,6 +11696,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8184da97cee55984da497bf1a95fec3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  scoreDisplay: {fileID: 0}
+  tornado: {fileID: 0}
+  scoreMultiplier: 10
+  stopTimeSeconds: 60
+  weightMultiplier: 1
 --- !u!1 &2129774947
 GameObject:
   m_ObjectHideFlags: 0

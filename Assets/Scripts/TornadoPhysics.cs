@@ -31,25 +31,25 @@ public class TornadoPhysics : MonoBehaviour
     private float gustNonCentreX;
     private float gustNonCentreY;
 
-    System.Func<float, float, float, Vector3> TornadoForce;
+    System.Func<float, float, float, float, Vector3> TornadoForce;
 
     private Vector3 GetTornadoCentre() 
     {
         return this.transform.position;
     }
 
-    private Vector3 TornadoForce_Normal(float xComponentSign, float yComponentToCentre, float distanceToCentre)
+    private Vector3 TornadoForce_Normal(float xComponentSign, float yComponentToCentre, float zComponentSign, float distanceToCentre)
     {
         float sideForceProportion = Clamp(distanceToCentre / distanceToExternal, 0, 1);
         float horizontalForce = ((sideForceProportion * externalSideForce + (1 - sideForceProportion) * internalSideForce) * forceMultiplier) * (Random.value + 1);
         float verticalForce = simulatedUpForce * forceMultiplier * (Random.value - 0.5f);
 
-        return new Vector3(horizontalForce * xComponentSign, verticalForce + (Clamp(yComponentToCentre, -2, 2)), 0);
+        return new Vector3(horizontalForce * xComponentSign, verticalForce + (Clamp(yComponentToCentre, -2, 2)), zComponentSign);
     }
 
-    private Vector3 TornadoForce_Stop(float a, float b, float c)
+    private Vector3 TornadoForce_Stop(float a, float b, float c, float z)
     {
-        return new Vector3(0.0f, -9.8f, 0.0f);
+        return new Vector3(0.0f, -9.8f, z);
     }
 
     private void TornadoWhoosh(Rigidbody body, Vector3 position)
@@ -57,12 +57,13 @@ public class TornadoPhysics : MonoBehaviour
         Vector3 vecToCentre = this.GetTornadoCentre() - position;
         float distanceToCentre = Vector3.Magnitude(vecToCentre);
         float vecToCentreXComponentSign = vecToCentre.x / Abs(vecToCentre.x);
+        float vecToCentreZComponentSign = vecToCentre.z / Abs(vecToCentre.z);
 
-        Vector3 force = this.TornadoForce(vecToCentreXComponentSign, vecToCentre.y, distanceToCentre);
+        Vector3 force = this.TornadoForce(vecToCentreXComponentSign, vecToCentre.y, distanceToCentre, vecToCentreZComponentSign);
         Vector3 gustForce = new Vector3(
             this.gustForceX * (vecToCentreXComponentSign + this.gustNonCentreX),
             this.gustForceY * (vecToCentreXComponentSign + this.gustNonCentreY),
-            0.0f
+            vecToCentreZComponentSign
         );
 
         body.AddForce(force, ForceMode.Acceleration);
