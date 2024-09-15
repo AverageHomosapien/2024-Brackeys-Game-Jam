@@ -5665,7 +5665,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1053431275}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16472b15118df8f4abab92cbde28788f, type: 3}
+  m_Script: {fileID: 11500000, guid: 21f5f1479e88c9f49b277cf0508c0877, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   forceMultiplier: 3
@@ -11693,11 +11693,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 2076005274}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8184da97cee55984da497bf1a95fec3a, type: 3}
+  m_Script: {fileID: 11500000, guid: a92fcac8734e8f94fb1326d6b6560c7b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scoreDisplay: {fileID: 0}
-  tornado: {fileID: 0}
+  scoreDisplay: {fileID: 2076005276}
+  tornado: {fileID: 1053431279}
   scoreMultiplier: 10
   stopTimeSeconds: 60
   weightMultiplier: 1

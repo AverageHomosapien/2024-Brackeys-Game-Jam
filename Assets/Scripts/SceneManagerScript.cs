@@ -30,16 +30,17 @@ public class SceneManagerScript : MonoBehaviour
         OnSceneSwitch?.Invoke(SceneManager.GetActiveScene().name);
     }
 
+    // First scene switch
     public void NextScene() 
     {    
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
-        OnSceneSwitch?.Invoke(SceneManager.GetActiveScene().name);
     }
 
+    // second scene
     public void NextScene(string sceneName) 
     {
         SceneManager.LoadScene(sceneName);
-        OnSceneSwitch?.Invoke(SceneManager.GetActiveScene().name);
+        OnSceneSwitch?.Invoke(sceneName);
     }
 
     public void ReloadScene() 

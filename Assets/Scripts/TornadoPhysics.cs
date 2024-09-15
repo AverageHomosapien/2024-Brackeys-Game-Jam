@@ -56,8 +56,8 @@ public class TornadoPhysics : MonoBehaviour
     {
         Vector3 vecToCentre = this.GetTornadoCentre() - position;
         float distanceToCentre = Vector3.Magnitude(vecToCentre);
-        float vecToCentreXComponentSign = vecToCentre.x / Abs(vecToCentre.x);
-        float vecToCentreZComponentSign = vecToCentre.z / Abs(vecToCentre.z);
+        float vecToCentreXComponentSign = vecToCentre.x / Abs(vecToCentre.x + 1);
+        float vecToCentreZComponentSign = vecToCentre.z / Abs(vecToCentre.z + 1);
 
         Vector3 force = this.TornadoForce(vecToCentreXComponentSign, vecToCentre.y, distanceToCentre, vecToCentreZComponentSign);
         Vector3 gustForce = new Vector3(
