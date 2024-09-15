@@ -18,14 +18,31 @@ public class DragDropItemScript : MonoBehaviour
 
     void Start()
     {
-        gameObject.GetComponent<Rigidbody>().isKinematic = false;
+        SceneManagerScript.OnSceneSwitch += OnSceneSwitchTriggered;
+        //gameObject.GetComponent<Rigidbody>().isKinematic = false;
         myMainCamera = Camera.main;
+        var rigidBody = GetComponent<Rigidbody>();
+        rigidBody.isKinematic = false;
+    }
+
+    private void OnSceneSwitchTriggered(string obj)
+    {
+        if (obj == "Tornado Lift Scene")
+        {
+            gameObject.GetComponent<Rigidbody>().isKinematic = false;
+        }
+    }
+
+    private void OnEnable()
+    {
+        var rigidBody = GetComponent<Rigidbody>();
+        rigidBody.isKinematic = true;
     }
 
     private void Update()
     {
-        var rigidBody = GetComponent<Rigidbody>();
-        rigidBody.velocity = Vector3.zero;
+        //var rigidBody = GetComponent<Rigidbody>();
+        //rigidBody.velocity = Vector3.zero;
 
         if (isDragging && Input.GetKey(KeyCode.E))
         {
@@ -36,10 +53,10 @@ public class DragDropItemScript : MonoBehaviour
             transform.Rotate(leftRotate);
         }
 
-        if (!isDragging)
-        {
-            transform.Rotate(Vector3.zero);// = new Quaternion(x: startingRotation.x, y: startingRotation.y, z: transform.rotation.z, w: startingRotation.w);
-        }
+        //if (!isDragging)
+        //{
+        //    transform.Rotate(Vector3.zero);// = new Quaternion(x: startingRotation.x, y: startingRotation.y, z: transform.rotation.z, w: startingRotation.w);
+        //}
     }
 
     void OnMouseDown()
@@ -51,13 +68,12 @@ public class DragDropItemScript : MonoBehaviour
         dragPlane.Raycast(camRay, out float planeDist);
         offset = transform.position - camRay.GetPoint(planeDist);
 
-        // Destroy joint if it exists (will only ever have 1 joint to another object)
-        if (gameObject.TryGetComponent(out FixedJoint specificJoint))
+        var fixedJoints = gameObject.GetComponents<FixedJoint>();
+
+        // Destory linked joints when player lifts mouse
+        for (int i = 0; i < fixedJoints.Length; i++)
         {
-            // Destroy the specific joint
-            Destroy(specificJoint);
-            Destroy(gameObject);
-            //DontDestroyOnLoad(specificJoint);
+            Destroy(fixedJoints[i]);
         }
     }
 
@@ -80,10 +96,10 @@ public class DragDropItemScript : MonoBehaviour
         isDragging = false;
 
         // Check if the object being dragged is touching any other objects
-        Collider[] colliders = Physics.OverlapSphere(gameObject.transform.position, 1f);
+        Collider[] colliders = Physics.OverlapSphere(gameObject.transform.position, 0.8f);
 
         // If in range, first try to add the joint to the player object
-        Collider playerCollider = colliders.FirstOrDefault(c => c.gameObject.tag == "Player");
+        Collider playerCollider = colliders.FirstOrDefault(c => c.gameObject.GetComponent<PlayerScript>());
         if (playerCollider != null)
         {
             AddJointToCollider(playerCollider);
@@ -105,8 +121,8 @@ public class DragDropItemScript : MonoBehaviour
         // If touching another object, create a joint between them
         FixedJoint joint = gameObject.AddComponent<FixedJoint>();
         joint.connectedBody = otherObjectToAttachTo.attachedRigidbody;
-        joint.breakForce = float.PositiveInfinity;
-        joint.breakTorque = float.PositiveInfinity;
+        joint.breakForce = 100f;
+        joint.breakTorque = 100f;
 
         DontDestroyOnLoad(gameObject);
     }

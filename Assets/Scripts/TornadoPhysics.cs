@@ -67,7 +67,7 @@ public class TornadoPhysics : MonoBehaviour
 
         body.AddForce(force, ForceMode.Acceleration);
         body.AddForce(gustForce, ForceMode.Impulse);
-        // Debug.Log("Whoosing with force: " + force.ToString());
+        Debug.Log("Whoosing with force: " + force.ToString());
     }
 
     public void OnStopScoring()
